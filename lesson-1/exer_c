@@ -1,0 +1,80 @@
+//NATHALY LORENA SANTOS ROCHA
+//MATRICULA: 201833840058
+
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdint.h> 
+#include <time.h>
+#define NUM_THREADS 8
+
+// Criando uma STRUCT
+struct dados_para_thread{
+	int thread_id;
+	int thread_rn;
+	int multp;
+};
+
+struct dados_para_thread dados_para_thread_array[NUM_THREADS];
+
+
+void *print_hello(void *threadarg){
+	int taskid, mult;
+	struct dados_para_thread *dadosthread;
+	
+	sleep(1);
+	
+	dadosthread = (struct dados_para_thread *) threadarg;
+	taskid = dadosthread->thread_id;
+	mult = dadosthread->thread_rn;
+	
+	intptr_t *resul = (intptr_t*) malloc(sizeof(intptr_t));
+	*resul = taskid * mult;
+	printf("No principal: criando a thread - id: #%d\t X %d = %d\n\n", dadosthread->thread_id,dadosthread->thread_rn, *resul);//In main: creating thread
+    //printf("Hello World! It's me, thread #%ld!\n", tid);
+    dadosthread-> multp = *resul; 
+    pthread_exit((void *)resul); //retorna o resultado para a thread principal
+};
+
+
+int main(int argc, char *argv[]){
+    system("cls||clear");
+    pthread_t threads[NUM_THREADS];
+    
+    
+    int error_code, *resultado,random;
+    long t,res;
+
+    for(t = 0;t < NUM_THREADS; t++){
+        dados_para_thread_array[t].thread_id = t;
+    	dados_para_thread_array[t].thread_rn = rand() % 100; 
+        error_code = pthread_create(&threads[t], NULL,
+                                    print_hello, (void *) &dados_para_thread_array[t]);
+        
+        if (error_code){
+            printf("ERROR; return code from pthread_create() is %d\n", error_code);
+            exit(-1);
+        }
+     
+    }
+    for(t = 0;t < NUM_THREADS; t++){
+    	pthread_join(threads[t], (void **)&resultado);
+		printf("Thread id: %d retorna o valor de: %d\n",dados_para_thread_array[t].thread_id,*resultado);
+		if (*resultado != (t * dados_para_thread_array[t].thread_rn)){
+        	printf("ERROR: Result for thread %d is incorrect\n", t);
+        
+        };
+	}
+    
+    for(t = 0; t < NUM_THREADS; t++){
+   		int resultado = dados_para_thread_array[t].multp;
+   		printf("Thread id: %d Struct mult:%d\n", dados_para_thread_array[t].thread_id, resultado);
+   		if (resultado != (t * dados_para_thread_array[t].thread_rn)){
+        	printf("ERROR: Result for thread %d is incorrect\n", t);
+        
+        }
+   	}
+    pthread_exit(NULL);
+    return 0;
+}
